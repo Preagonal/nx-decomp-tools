@@ -3,9 +3,9 @@ import toml
 
 
 def get_repo_root() -> Path:
-    return Path(__file__).resolve().parent.parent.parent.parent
+    return Path(__file__).resolve().parent.parent
 
-CONFIG = toml.load(get_repo_root() / "tools" / "config.toml")
+CONFIG = toml.load(get_repo_root() / "config.toml")
 
 def get_default_version() -> str:
     return CONFIG.get("default_version")
@@ -15,24 +15,24 @@ def get_versioned_data_path(version = get_default_version()) -> Path:
 
     if version is not None:
         value /= version
-    
+
     return value
 
 def get_functions_csv_path(version = None) -> Path:
     value = CONFIG["functions_csv"]
     if version is None:
         version = get_default_version()
-    
+
     if version is not None:
         value = value.replace("{version}", version)
-    
+
     if "{version}" in value:
         raise RuntimeError("You should probably pass a --version parameter. If this error still shows up with the argument given, please contact the repo maintainers.")
 
     return get_repo_root() / value
 
 def get_base_elf(version = get_default_version()) -> Path:
-    return get_versioned_data_path() / 'main.elf'
+    return get_versioned_data_path().parent.parent / 'mainlib.so'
 
 def get_build_target() -> str:
     return CONFIG["build_target"]

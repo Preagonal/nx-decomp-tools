@@ -28,34 +28,34 @@ def bold(s) -> str:
 def dump_table(name: str) -> None:
     try:
         symbols = util.elf.build_addr_to_symbol_table(util.elf.my_symtab)
-        decomp_symbols = {fn.decomp_name for fn in utils.get_functions() if fn.decomp_name}
+        decomp_symbols = {}
 
-        offset, size = util.elf.get_symbol_file_offset_and_size(util.elf.my_elf, util.elf.my_symtab, name)
-        util.elf.my_elf.stream.seek(offset)
-        vtable_bytes = util.elf.my_elf.stream.read(size)
+        offset, size = util.elf.get_symbol_file_offset_and_size(util.elf.base_elf, util.elf.my_symtab, name)
+        util.elf.base_elf.stream.seek(offset)
+        vtable_bytes = util.elf.base_elf.stream.read(size)
 
         if not vtable_bytes:
             utils.fail(
                 "empty vtable; has the key function been implemented? (https://lld.llvm.org/missingkeyfunction.html)")
 
-        print(f"{Fore.WHITE}{Style.BRIGHT}{cxxfilt.demangle(name)}{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}{Style.BRIGHT}vtable @ 0x0{Style.RESET_ALL}")
-
+        print(f".section .data.rel.ro\n\t.globl {name}\n\n{name}:")
+        #print(f"{Fore.YELLOW}{Style.BRIGHT}vtable @ 0x0{Style.RESET_ALL}")
+        name_bkp = name
         assert size % 8 == 0
         for i in range(size // 8):
             word: int = struct.unpack_from("<Q", vtable_bytes, 8 * i)[0]
             name = symbols.get(word, None)
             if word == 0:
-                pass
+                print(f"\t.quad {word}")
             elif name is not None:
                 demangled_name: str = cxxfilt.demangle(name)
                 color = Fore.GREEN if name in decomp_symbols else Fore.BLUE
-                print(f"{color}{bold(demangled_name)}{Style.RESET_ALL}")
-                print(f"    {name}")
+                #print(f"{color}{bold(demangled_name)}{Style.RESET_ALL}")
+                print(f"\t.quad {name}")
             elif word & (1 << 63):
                 offset = -struct.unpack_from("<q", vtable_bytes, 8 * i)[0]
-                print()
-                print(f"{Fore.YELLOW}{Style.BRIGHT}vtable @ {offset:#x}{Style.RESET_ALL}")
+                print(f"\t.quad {word:#x}")
+                #print(f"{Fore.YELLOW}{Style.BRIGHT}vtable @ {offset:#x}{Style.RESET_ALL}")
             else:
                 print(f"{Fore.RED}unknown data: {word:016x}{Style.RESET_ALL}")
 
