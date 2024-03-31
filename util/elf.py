@@ -9,13 +9,18 @@ from elftools.elf.sections import Section
 from . import utils, config
 
 base_elf_data = io.BytesIO(config.get_base_elf().read_bytes())
-#my_elf_data = io.BytesIO(config.get_decomp_elf().read_bytes())
+my_elf_data = io.BytesIO(config.get_decomp_elf().read_bytes())
 
 base_elf = ELFFile(base_elf_data)
-#my_elf = ELFFile(my_elf_data)
-my_symtab = base_elf.get_section_by_name(".dynsym")
-if not my_symtab:
+my_elf = ELFFile(my_elf_data)
+
+base_symtab = base_elf.get_section_by_name(".dynsym")
+if not base_symtab:
     utils.fail(f'{config.get_base_elf()} has no symbol table')
+
+my_symtab = my_elf.get_section_by_name(".dynsym")
+if not my_symtab:
+    utils.fail(f'{config.get_decomp_elf()} has no symbol table')
 
 
 class Symbol(NamedTuple):

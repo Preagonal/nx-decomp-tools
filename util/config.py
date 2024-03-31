@@ -38,7 +38,7 @@ def get_build_target() -> str:
     return CONFIG["build_target"]
 
 def get_decomp_elf(version = get_default_version()) -> Path:
-    value = get_repo_root() / 'build'
+    value = get_repo_root().parent / 'bin'
 
     if version is not None:
         value /= version

@@ -6,6 +6,7 @@ from typing import Optional
 
 import cxxfilt
 from colorama import Fore, Style
+from util import utils, config
 
 import util.elf
 from util import utils
@@ -25,14 +26,14 @@ def bold(s) -> str:
     return Style.BRIGHT + str(s) + Style.NORMAL
 
 
-def dump_table(name: str) -> None:
+def dump_table(belf, symtab, name: str) -> None:
     try:
-        symbols = util.elf.build_addr_to_symbol_table(util.elf.my_symtab)
+        symbols = util.elf.build_addr_to_symbol_table(symtab)
         decomp_symbols = {}
 
-        offset, size = util.elf.get_symbol_file_offset_and_size(util.elf.base_elf, util.elf.my_symtab, name)
-        util.elf.base_elf.stream.seek(offset)
-        vtable_bytes = util.elf.base_elf.stream.read(size)
+        offset, size = util.elf.get_symbol_file_offset_and_size(belf, symtab, name)
+        belf.stream.seek(offset)
+        vtable_bytes = belf.stream.read(size)
 
         if not vtable_bytes:
             utils.fail(
@@ -66,14 +67,23 @@ def dump_table(name: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("symbol_name", help="Name of the vtable symbol (_ZTV...) or class name")
+    parser.add_argument("elf", help="Name of the vtable symbol (_ZTV...) or class name")
     args = parser.parse_args()
 
     symbol_name: str = args.symbol_name
 
-    if not symbol_name.startswith("_ZTV"):
-        symbol_name = find_vtable(util.elf.my_symtab, args.symbol_name)
+    symtab = util.elf.base_symtab
+    belf = util.elf.base_elf
 
-    dump_table(symbol_name)
+    if args.elf == "my":
+        print(f"{config.get_decomp_elf()}")
+        symtab = util.elf.my_symtab
+        belf = util.elf.my_elf
+
+    if not symbol_name.startswith("_ZTV"):
+        symbol_name = find_vtable(symtab, args.symbol_name)
+
+    dump_table(belf, symtab, symbol_name)
 
 
 if __name__ == "__main__":
