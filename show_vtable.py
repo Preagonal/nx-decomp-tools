@@ -75,10 +75,10 @@ def main() -> None:
     symtab = util.elf.base_symtab
     belf = util.elf.base_elf
 
-    if args.elf == "my":
-        print(f"{config.get_decomp_elf()}")
-        symtab = util.elf.my_symtab
-        belf = util.elf.my_elf
+    #if args.elf == "my":
+    #    print(f"{config.get_decomp_elf()}")
+    #    symtab = util.elf.my_symtab
+    #    belf = util.elf.my_elf
 
     if not symbol_name.startswith("_ZTV"):
         symbol_name = find_vtable(symtab, args.symbol_name)
